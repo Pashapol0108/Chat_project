@@ -17,7 +17,7 @@
 1. Убедитесь, что у вас установлены Python и PostgreSQL.
 2. Клонируйте репозиторий проекта:
    ```bash
-   git clone https://github.com/ваш_репозиторий
+   git clone https://github.com/Pashapol0108/Chat_project.git
    cd ваш_проект
    ```
 3. Установите зависимости:
