@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чаты</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+
+        /* Header styling */
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .header .edit-btn, .header .logout-btn {
+            background-color: white;
+            color: #007bff;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .header .edit-btn:hover, .header .logout-btn:hover {
+            background-color: #e6f0ff;
+        }
+
+        /* Container styling */
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #007bff;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .form-popup h2 {
+            color: #007bff;
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+
+        /* Buttons */
+        .action-btn {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .action-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Chatroom list */
+        .chatroom-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .chatroom-list li {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatroom-list li a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        /* Popup Form Styling */
+        .form-popup {
+            display: none;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .form-popup input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .form-popup input[type="submit"], .form-popup .close-btn, .form-popup .search-btn {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            width: auto;
+            margin-bottom: 10px;
+        }
+
+        .form-popup input[type="submit"]:hover, .form-popup .search-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .form-popup .close-btn {
+            background-color: #ff4d4d;
+            padding: 5px 10px;
+        }
+
+        .form-popup .close-btn:hover {
+            background-color: #ff6666;
+        }
+
+        /* Search results styling */
+        .search-result-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .search-result-list li {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-result-list li a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Header section -->
+    <div class="header">
+        <h2>{{ user.nickname }}<button class="edit-btn" id="openNicknameFormBtn">Изменить</button></h2>
+        <button class="logout-btn" id="logoutBtn">Выйти</button>
+    </div>
+
+    <!-- Main container -->
+    <div class="container">
+        <h1>Мои чаты</h1>
+
+        <!-- Мои комнаты -->
+        <button class="action-btn" id="openCreateBtn">Создать новый чат</button>
+        <ul class="chatroom-list">
+            {% if my_chatrooms %}
+                {% for chatroom in my_chatrooms %}
+                <li>
+                    <a href="/chat/{{ chatroom.name }}?token={{ token }}">{{ chatroom.name }}</a>
+                    <form action="/chatrooms/delete/{{ chatroom.id }}" method="post">
+                        <input type="submit" value="Удалить">
+                    </form>
+                </li>
+                {% endfor %}
+            {% else %}
+                <li>Вы еще не создали ни одного чата</li>
+            {% endif %}
+        </ul>
+
+        <!-- Все комнаты -->
+        <h1>Все чаты</h1>
+
+        <!-- Поиск чатов -->
+        <button class="action-btn" id="openSearchBtn">Поиск чатов</button>
+        <div class="form-popup" id="searchForm">
+            <h2>Найти чат</h2>
+            <input type="text" id="searchInput" placeholder="Введите название чата">
+            <button class="search-btn" id="searchBtn">Найти</button>
+            <ul id="searchResults" class="search-result-list"></ul>
+            <button class="close-btn" onclick="closeSearch()">Закрыть</button>
+        </div>
+
+        <ul class="chatroom-list">
+            {% if other_chatrooms %}
+                {% for chatroom in other_chatrooms %}
+                <li><a href="/chat/{{ chatroom.name }}?token={{ token }}">{{ chatroom.name }}</a></li>
+                {% endfor %}
+            {% else %}
+                <li>Нет доступных чатов.</li>
+            {% endif %}
+        </ul>
+
+        <!-- Создание новой комнаты -->
+        <div class="form-popup" id="createRoomForm">
+            <h2>Создать новый чат</h2>
+            <form action="/chatrooms/" method="post">
+                <input type="text" name="name" placeholder="Название нового чата" required>
+                <input type="submit" value="Создать">
+            </form>
+            <button class="close-btn" onclick="closeCreate()">Закрыть</button>
+        </div>
+
+        <!-- Изменение никнейма -->
+        <div class="form-popup" id="nicknameForm">
+            <h2>Изменить никнейм</h2>
+            <form action="/update_nickname/" method="post">
+                <input type="text" name="nickname" value="{{ user.nickname }}" placeholder="Введите новый никнейм" required>
+                <input type="submit" value="Сохранить">
+            </form>
+            <button class="close-btn" onclick="closeNicknameForm()">Закрыть</button>
+        </div>
+
+    </div>
+
+    <script>
+        // Показ формы изменения никнейма
+        document.getElementById('openNicknameFormBtn').addEventListener('click', function() {
+            document.getElementById('nicknameForm').style.display = 'block';
+        });
+
+        // Показ формы создания комнаты
+        document.getElementById('openCreateBtn').addEventListener('click', function() {
+            document.getElementById('createRoomForm').style.display = 'block';
+        });
+
+        // Показ формы поиска
+        document.getElementById('openSearchBtn').addEventListener('click', function() {
+            document.getElementById('searchForm').style.display = 'block';
+        });
+
+        // Закрытие формы поиска
+        function closeSearch() {
+            document.getElementById('searchForm').style.display = 'none';
+        }
+
+        // Закрытие формы создания комнаты
+        function closeCreate() {
+            document.getElementById('createRoomForm').style.display = 'none';
+        }
+
+        // Закрытие формы изменения никнейма
+        function closeNicknameForm() {
+            document.getElementById('nicknameForm').style.display = 'none';
+        }
+
+        // Логика выхода
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            // Создаем форму для отправки POST-запроса на выход
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/logout/';
+            document.body.appendChild(form);
+            form.submit();
+            // Очищаем историю браузера и переходим на страницу входа
+            history.replaceState(null, null, '/login/');
+        });
+
+
+        // Принудительная перезагрузка страницы при возврате назад
+        window.addEventListener("pageshow", function(event) {
+            // Если страница была загружена из кэша (что случается при нажатии на кнопку "Назад")
+            if (event.persisted || window.performance && window.performance.navigation.type === 2) {
+                // Принудительно обновляем страницу
+                window.location.reload();
+            }
+        });
+
+        // Поиск чатов
+        document.getElementById('searchBtn').addEventListener('click', function() {
+            const query = document.getElementById('searchInput').value;
+            fetch(`/search/?query=${query}`)
+                .then(response => response.json())
+                .then(data => {
+                    const resultsDiv = document.getElementById('searchResults');
+                    resultsDiv.innerHTML = '';  // Очищаем предыдущие результаты
+                    if (data.length > 0) {
+                        data.forEach(chatroom => {
+                            const chatDiv = document.createElement('li');
+                            const chatLink = `<a href="/chat/${chatroom.name}?token={{ token }}">${chatroom.name}</a>`;
+                            chatDiv.innerHTML = chatLink;
+                            resultsDiv.appendChild(chatDiv);
+                        });
+                    } else {
+                        resultsDiv.innerText = 'Чаты не найдены.';
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при поиске чатов:', error);
+                });
+        });
+    </script>
+
+</body>
+</html>

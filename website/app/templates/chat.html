@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат - {{ room_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin: 20px 0;
+        }
+
+        #chatBox {
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            width: 80%;
+            height: 400px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: white;
+            overflow-y: scroll;
+        }
+
+        .message {
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            max-width: 60%;
+            clear: both;
+            display: inline-block;
+            word-wrap: break-word;
+        }
+
+        .message.sent {
+            background-color: #dcf8c6;
+            float: right;
+            text-align: right;
+        }
+
+        .message.received {
+            background-color: #f1f0f0;
+            float: left;
+        }
+
+        .message .sender {
+            font-weight: normal;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .notification {
+            text-align: center;
+            color: gray;
+            font-style: italic;
+            margin: 10px 0;
+            clear: both;
+        }
+
+        #messageInput {
+            width: 70%;
+            padding: 10px;
+            margin: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #sendMessageBtn {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #sendMessageBtn:hover {
+            background-color: #0056b3;
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 20px;
+        }
+
+        .exit-btn {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .exit-btn:hover {
+            background-color: #0056b3;
+        }
+
+    </style>
+    <script>
+        let ws;
+
+        function connectToChat() {
+            const roomName = document.getElementById("roomName").value;
+            const token = "{{ token }}";  // Получаем токен из шаблона
+            ws = new WebSocket(`ws://127.0.0.1:8001/ws/chat/${roomName}?token=${token}`);
+
+            ws.onmessage = function(event) {
+                const chatBox = document.getElementById("chatBox");
+                const data = event.data;
+                const messageElement = document.createElement("div");
+
+                // Проверяем, является ли сообщение уведомлением или обычным сообщением
+                if (data.includes("присоединился") || data.includes("покинул")) {
+                    messageElement.classList.add("notification");
+                    messageElement.textContent = data;
+                } else {
+                    const [sender, ...messageParts] = data.split(": ");
+                    const messageText = messageParts.join(": ");
+                    messageElement.classList.add("message");
+
+                    if (sender === "{{ user.nickname }}") {
+                        messageElement.classList.add("sent");
+                        messageElement.innerHTML = `<div>${messageText}</div>`;
+                    } else {
+                        messageElement.classList.add("received");
+                        messageElement.innerHTML = `<div class="sender">${sender}</div><div>${messageText}</div>`;
+                    }
+                }
+
+                chatBox.appendChild(messageElement);
+                chatBox.scrollTop = chatBox.scrollHeight;  // Автоматическая прокрутка вниз
+            };
+
+            ws.onclose = function() {
+                alert("Соединение с чатом закрыто");
+            };
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById("messageInput");
+            const message = messageInput.value.trim();
+
+            if (message !== "") {
+                ws.send(message);
+                messageInput.value = "";  // Очищаем поле ввода после отправки
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const messageInput = document.getElementById("messageInput");
+            messageInput.addEventListener("keydown", function(event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();  // Предотвращаем стандартное поведение Enter
+                    sendMessage();  // Отправляем сообщение
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>{{ room_name }}</h1>
+
+    <!-- Контейнер для сообщений -->
+    <div id="chatBox"></div>
+
+    <div class="button-container">
+        <input type="hidden" id="roomName" value="{{ room_name }}">
+        <input type="text" id="messageInput" placeholder="Введите сообщение">
+        <button id="sendMessageBtn" onclick="sendMessage()">Отправить</button>
+    </div>
+
+    <!-- Кнопка для выхода в главное меню -->
+    <div class="button-container">
+        <button class="exit-btn" onclick="window.location.href='/chatrooms'">Выйти в главное меню</button>
+    </div>
+
+    <script>
+        connectToChat();
+    </script>
+</body>
+</html>

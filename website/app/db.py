@@ -1,0 +1,21 @@
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+import time
+time.sleep(5)  # Задержка на 5 секунд перед попыткой подключения
+
+SQLALCHEMY_DATABASE_URL = "postgresql://myuser:mypassword@db:5432/chatdb"
+
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+
+def get_db():
+    db_session = SessionLocal()
+    try:
+        yield db_session
+    finally:
+        db_session.close()
